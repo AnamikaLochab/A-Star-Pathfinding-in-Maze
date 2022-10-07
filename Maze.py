@@ -1,6 +1,6 @@
 import pygame
 import random
-import Algorithm1
+#import Algorithm1
 size = 800
 window = pygame.display.set_mode((size,size))
 
