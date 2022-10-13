@@ -181,6 +181,26 @@ def grid(rows,size):
 			Grid[i].append(c)
 	return Grid
 
+# agent_grid function uses the cell class and 2D array named grid to create the gridworld for the agent
+def agent_grid(rows,size):
+	Grid = []    #List to 2D array
+	width = size//rows
+	for i in range(rows):
+		Grid.append([])
+		for j in range(rows):
+			c = cell(i,j,width)
+			Grid[i].append(c)
+	return Grid
+
+# reset the f, g, h, and parent values of the agent grid for the next call of A*
+def clear_values(Grid):
+	for i in range(len(Grid)):
+		for j in range(len(Grid[i])):
+			Grid[i][j].f = float('inf')
+			Grid[i][j].g = float('inf')
+			Grid[i][j].h = float('inf')
+			Grid[i][j].parent = (-1, -1)
+
 # build_grid just draws the lines based on
 def build_grid(window, size, rows) :
 	width = size//rows
@@ -211,17 +231,32 @@ def draw_grid(window,Grid, rows, size):
 	Screen = pygame.display.update()
 
 
-def Assign_Start_End(Grid,rows,size):
+def Assign_Start_End(Grid, AgentGrid, rows,size):
 	width = size // rows
-	i = random.randint(0, rows - 1)
-	j = random.randint(0, rows - 1)
-	Start_Node = Grid[i][j]
-	Grid[i][j].color = (255, 250, 0)
-	# haven't put the loop to check if end nodes randomly gets same i,j as start, but will add that later
-	i = random.randint(0, rows - 1)
-	j = random.randint(0, rows - 1)
-	End_Node = Grid[i][j]
-	Grid[i][j].color = (255, 0, 0) # End node color red
+	i = 0
+	j = 1
+	if Grid[i][j].value == 0:
+		Grid[i][j].value == 1
+	Start_Node = AgentGrid[i][j]
+	AgentGrid[i][j].color = (255, 250, 0)
+
+	i = rows - 1
+	j = rows - 2
+	if Grid[i][j].value == 0:
+		Grid[i][j].value == 1
+
+	End_Node = AgentGrid[i][j]
+	AgentGrid[i][j].color = (255, 0, 0) # End node color red
+
+	# i = random.randint(0, rows - 1)
+	# j = random.randint(0, rows - 1)
+	# Start_Node = Grid[i][j]
+	# Grid[i][j].color = (255, 250, 0)
+	# # haven't put the loop to check if end nodes randomly gets same i,j as start, but will add that later
+	# i = random.randint(0, rows - 1)
+	# j = random.randint(0, rows - 1)
+	# End_Node = Grid[i][j]
+	# Grid[i][j].color = (255, 0, 0) # End node color red
 	return Start_Node, End_Node
 
 def manhattanD(cell1,cell2):
@@ -246,7 +281,7 @@ def tracePath(Grid, End_Node):
 
 	
 def A_Star(Grid,size,Start_Node,End_Node):
-	OpenSet=MinHeap(size)
+	OpenSet=MinHeap(10000)
 	ClosedSet=[]
 	OpenSet.insert(Start_Node)
 	PathTraversal=[]
@@ -261,12 +296,6 @@ def A_Star(Grid,size,Start_Node,End_Node):
 		currentNode = OpenSet.remove()
 		print(str(currentNode.row) + ',' + str(currentNode.column))
 		ClosedSet.append((currentNode.cell_row(), currentNode.cell_column()))
-		# if currentNode !=Start_Node and currentNode!=End_Node:
-		#     currentNode.color = (0,255,0)
-		#     currentNode.draw_cell()
-		# if(currentNode == End_Node):
-		#     print("done")
-		#     return True
 		for n in currentNode.neighbours:
 			if n.cell_row() == End_Node.cell_row() and n.cell_column() == End_Node.cell_column():
 				n.parent = (currentNode.cell_row(), currentNode.cell_column())
@@ -283,8 +312,8 @@ def A_Star(Grid,size,Start_Node,End_Node):
 					n.g = gTemp
 					n.h = hTemp
 					n.parent = (currentNode.cell_row(), currentNode.cell_column() )
-
-				OpenSet.insert(n)
+					OpenSet.insert(n)
+				
 
 		OpenSet.minHeap()
 
@@ -293,16 +322,51 @@ def A_Star(Grid,size,Start_Node,End_Node):
 	return PathTraversal
 
 
-def Repeated_A_Star(Grid,Size, StartNode,End_Node):
+def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node):
 	S = StartNode
-	# while S != End_Node and len(ClosedSet)!= 1600:
-	#     S=A_Star(Grid,S,End_Node)
+	while S.cell_row() != End_Node.cell_row() and S.cell_column() != End_Node.cell_column():
+		path = A_Star(AgentGrid, size, S, End_Node)
+		if len(path) == 0:
+			print("I cannot reach the target")
+			return
+		endOfPath = -1
+		for i in range(len(path)):
+			current = path[i]
+			row = current[0]
+			col = current[1]
+			if AgentGrid[row][col].value == 0:
+				endOfPath = i
+				break
+			for n in AgentGrid[row][col].neighbours:
+				if Grid[n.cell_row()][n.cell_column()].value == 0:
+					n.value == 0
 
-#def A_star():
+		for i in range(endOfPath):
+			current = path[i]
+			row = current[0]
+			col = current[1]
+			if row != End_Node.cell_row() or col != End_Node.cell_column():
+				AgentGrid[row][col].color = (0,255,0)
+				AgentGrid[row][col].draw_cell()
+
+		if endOfPath != -1:
+			S = AgentGrid[path[endOfPath - 1][0]][path[endOfPath - 1][1]]
+			S.color = (0, 0, 255)
+			S.draw_cell()
+			clear_values(AgentGrid)
+		else:
+			S = End_Node
+
+		draw_grid(window,AgentGrid,100,size)
+
+	print("I reached the target")
+		
+			
 
 def main(window, size):
 	rows = 100
 	G = grid(rows,size)
+	AG = agent_grid(rows,size)
 	play = True
 	start = True
 
@@ -312,18 +376,22 @@ def main(window, size):
 			if event.type == pygame.QUIT:
 				exit()
 		if start:
-			Start_Node, End_Node = Assign_Start_End(G,rows,size)
-			draw_grid(window,G,rows,size)
+			Start_Node, End_Node = Assign_Start_End(G,AG,rows,size)
+			for n in AG[Start_Node.cell_row()][Start_Node.cell_column()].neighbours:
+				if G[n.cell_row()][n.cell_col()].value == 0:
+					n.value == 0
+					n.color == (0, 0, 0)
+			draw_grid(window,AG,rows,size)
 			start = False
-			path = A_Star(G,size,Start_Node,End_Node)
-			if len(path) != 0:
-				for i in range (len(path)):
-					current = path[i]
-					row = current[0]
-					col = current[1]
-					if G[row][col] != End_Node:
-						G[row][col].color = (0,255,0)
-						G[row][col].draw_cell()
+			path = Repeated_A_Star(G,AG,size,Start_Node,End_Node)
+			# if len(path) != 0:
+			# 	for i in range (len(path)):
+			# 		current = path[i]
+			# 		row = current[0]
+			# 		col = current[1]
+			# 		if G[row][col] != End_Node:
+			# 			G[row][col].color = (0,255,0)
+			# 			G[row][col].draw_cell()
 			pygame.display.update()
 
 
