@@ -68,4 +68,3 @@ def Repeated_A_Star(Grid,Size, StartNode,End_Node):
     S = StartNode
     # while S != End_Node and len(ClosedSet)!= 1600:
     #     S=A_Star(Grid,S,End_Node)
-
