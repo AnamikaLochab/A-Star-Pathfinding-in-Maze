@@ -243,7 +243,7 @@ def Assign_Start_End(Grid, AgentGrid, rows,size):
 	i = rows - 1
 	j = rows - 2
 	if Grid[i][j].value == 0:
-		Grid[i][j].value == 1
+		Grid[i][j].value = 1
 
 	End_Node = AgentGrid[i][j]
 	AgentGrid[i][j].color = (255, 0, 0) # End node color red
@@ -291,7 +291,7 @@ def A_Star(Grid,size,Start_Node,End_Node):
 	Start_Node.h = manhattanD(Start_Node,End_Node)
 	Start_Node.f = Start_Node.cell_g() + Start_Node.cell_h()
 	Start_Node.parent = (Start_Node.cell_row(), Start_Node.cell_column())
-	print(Start_Node.cell_f())
+	# print(Start_Node.cell_f())
 	while OpenSet.size>0:
 		currentNode = OpenSet.remove()
 		print(str(currentNode.row) + ',' + str(currentNode.column))
@@ -324,8 +324,11 @@ def A_Star(Grid,size,Start_Node,End_Node):
 
 def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node):
 	S = StartNode
-	while S.cell_row() != End_Node.cell_row() and S.cell_column() != End_Node.cell_column():
+	Grid[S.cell_row()][S.cell_column()].color=(255,250,0)
+
+	while S.cell_row() != End_Node.cell_row() or S.cell_column() != End_Node.cell_column():
 		path = A_Star(AgentGrid, size, S, End_Node)
+		print(path)
 		if len(path) == 0:
 			print("I cannot reach the target")
 			return
@@ -334,13 +337,13 @@ def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node):
 			current = path[i]
 			row = current[0]
 			col = current[1]
-			if AgentGrid[row][col].value == 0:
+			if AgentGrid[row][col].value == 0 or path[i] == (End_Node.cell_row(),End_Node.cell_column()):
 				endOfPath = i
 				break
 			for n in AgentGrid[row][col].neighbours:
 				if Grid[n.cell_row()][n.cell_column()].value == 0:
-					n.value == 0
-
+					n.value = 0
+					n.color = (0,0,0)
 		for i in range(endOfPath):
 			current = path[i]
 			row = current[0]
@@ -348,17 +351,21 @@ def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node):
 			if row != End_Node.cell_row() or col != End_Node.cell_column():
 				AgentGrid[row][col].color = (0,255,0)
 				AgentGrid[row][col].draw_cell()
+				Grid[row][col].color=(0,255,0)
+
 
 		if endOfPath != -1:
 			S = AgentGrid[path[endOfPath - 1][0]][path[endOfPath - 1][1]]
+			Grid[path[endOfPath - 1][0]][path[endOfPath - 1][1]].color=(0,0,255)
 			S.color = (0, 0, 255)
 			S.draw_cell()
 			clear_values(AgentGrid)
-		else:
-			S = End_Node
+		# else:
+		# 	S = End_Node
 
-		draw_grid(window,AgentGrid,100,size)
-
+		Grid[End_Node.cell_row()][End_Node.cell_column()].color=(255,0,0)
+		draw_grid(window,Grid,100,size)
+	Grid[End_Node.cell_row()][End_Node.cell_column()].color=(255,0,0)
 	print("I reached the target")
 		
 			
@@ -379,8 +386,8 @@ def main(window, size):
 			Start_Node, End_Node = Assign_Start_End(G,AG,rows,size)
 			for n in AG[Start_Node.cell_row()][Start_Node.cell_column()].neighbours:
 				if G[n.cell_row()][n.cell_col()].value == 0:
-					n.value == 0
-					n.color == (0, 0, 0)
+					n.value = 0
+					n.color = (0, 0, 0)
 			draw_grid(window,AG,rows,size)
 			start = False
 			path = Repeated_A_Star(G,AG,size,Start_Node,End_Node)
