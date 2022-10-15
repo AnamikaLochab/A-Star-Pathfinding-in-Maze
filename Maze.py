@@ -1,3 +1,4 @@
+from turtle import clear
 import pygame
 import random
 import Algorithm1
@@ -193,12 +194,13 @@ def agent_grid(rows,size):
 	return Grid
 
 # reset the f, g, h, and parent values of the agent grid for the next call of A*
-def clear_values(Grid):
+def clear_values(Grid,adaptive=False):
 	for i in range(len(Grid)):
 		for j in range(len(Grid[i])):
 			Grid[i][j].f = float('inf')
 			Grid[i][j].g = float('inf')
-			Grid[i][j].h = float('inf')
+			if not adaptive:
+				Grid[i][j].h = float('inf')
 			Grid[i][j].parent = (-1, -1)
 
 # build_grid just draws the lines based on
@@ -280,7 +282,7 @@ def tracePath(Grid, End_Node):
 	return path 
 
 	
-def A_Star(Grid,size,Start_Node,End_Node):
+def A_Star(Grid,size,Start_Node,End_Node,adaptive=False):
 	OpenSet=MinHeap(10000)
 	ClosedSet=[]
 	OpenSet.insert(Start_Node)
@@ -291,10 +293,9 @@ def A_Star(Grid,size,Start_Node,End_Node):
 	Start_Node.h = manhattanD(Start_Node,End_Node)
 	Start_Node.f = Start_Node.cell_g() + Start_Node.cell_h()
 	Start_Node.parent = (Start_Node.cell_row(), Start_Node.cell_column())
-	# print(Start_Node.cell_f())
+
 	while OpenSet.size>0:
 		currentNode = OpenSet.remove()
-		print(str(currentNode.row) + ',' + str(currentNode.column))
 		ClosedSet.append((currentNode.cell_row(), currentNode.cell_column()))
 		for n in currentNode.neighbours:
 			if n.cell_row() == End_Node.cell_row() and n.cell_column() == End_Node.cell_column():
@@ -303,18 +304,29 @@ def A_Star(Grid,size,Start_Node,End_Node):
 				PathTraversal = tracePath(Grid, End_Node)
 				return PathTraversal
 			if (n.cell_row(), n.cell_column()) not in ClosedSet and n.value !=0:
-				hTemp = manhattanD(n,End_Node)
-				gTemp = currentNode.cell_g() + 1
-				fTemp = hTemp + gTemp
-
-				if fTemp < n.cell_f():
-					n.f = fTemp
-					n.g = gTemp
-					n.h = hTemp
+				if(adaptive):																		#for adaptive runs			
+					S_to_goal=manhattanD(Start_Node,End_Node)
+					S_to_current=manhattanD(Start_Node,currentNode)
+					if(n.h == float('inf')):														#infinite h values use normal heuristic
+						n.h =manhattanD(n,End_Node)
+					else:
+						n.h=S_to_goal-S_to_current													#heuristic changes for adaptive runs
+					n.g=currentNode.cell_g()+1	
+					n.f=n.g+n.h
 					n.parent = (currentNode.cell_row(), currentNode.cell_column() )
-					OpenSet.insert(n)
-				
+					OpenSet.insert(n)	
 
+				else:																				#for normal runs
+					hTemp = manhattanD(n,End_Node)
+					gTemp = currentNode.cell_g() + 1
+					fTemp = hTemp + gTemp
+
+					if fTemp < n.cell_f():
+						n.f = fTemp
+						n.g = gTemp
+						n.h = hTemp
+						n.parent = (currentNode.cell_row(), currentNode.cell_column() )
+						OpenSet.insert(n)
 		OpenSet.minHeap()
 
 	if not foundDest:
@@ -322,13 +334,19 @@ def A_Star(Grid,size,Start_Node,End_Node):
 	return PathTraversal
 
 
-def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node):
+def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node,adaptive=False):
 	S = StartNode
 	Grid[S.cell_row()][S.cell_column()].color=(255,250,0)
 
+	counter=0
+
 	while S.cell_row() != End_Node.cell_row() or S.cell_column() != End_Node.cell_column():
-		path = A_Star(AgentGrid, size, S, End_Node)
-		print(path)
+		if(adaptive):
+			path = A_Star(AgentGrid, size, S, End_Node,counter != 0)				#for the first call, the adaptive A* runs like normal A*
+		else:
+			path=A_Star(AgentGrid,size,S,End_Node)
+		counter+=1																	#counter to keep track of A* calls
+
 		if len(path) == 0:
 			print("I cannot reach the target")
 			return
@@ -344,6 +362,7 @@ def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node):
 				if Grid[n.cell_row()][n.cell_column()].value == 0:
 					n.value = 0
 					n.color = (0,0,0)
+
 		for i in range(endOfPath):
 			current = path[i]
 			row = current[0]
@@ -359,7 +378,7 @@ def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node):
 			Grid[path[endOfPath - 1][0]][path[endOfPath - 1][1]].color=(0,0,255)
 			S.color = (0, 0, 255)
 			S.draw_cell()
-			clear_values(AgentGrid)
+			clear_values(AgentGrid,adaptive)												#remembering the h values for nodes that have been travesered in adaptive A* calls
 		# else:
 		# 	S = End_Node
 
@@ -390,7 +409,7 @@ def main(window, size):
 					n.color = (0, 0, 0)
 			draw_grid(window,AG,rows,size)
 			start = False
-			path = Repeated_A_Star(G,AG,size,Start_Node,End_Node)
+			path = Repeated_A_Star(G,AG,size,Start_Node,End_Node,True) 			#using True and False for repeated or Adapative A* runs
 			# if len(path) != 0:
 			# 	for i in range (len(path)):
 			# 		current = path[i]
