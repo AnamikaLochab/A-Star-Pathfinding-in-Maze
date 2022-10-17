@@ -2,6 +2,7 @@ from turtle import clear
 import pygame
 import random
 import Algorithm1
+import time
 
 import sys
 
@@ -305,8 +306,8 @@ def A_Star(Grid,size,Start_Node,End_Node,adaptive=False):
 				return PathTraversal
 			if (n.cell_row(), n.cell_column()) not in ClosedSet and n.value !=0:
 				if(adaptive):																		#for adaptive runs			
-					S_to_goal=manhattanD(Start_Node,End_Node)
-					S_to_current=manhattanD(Start_Node,currentNode)
+					S_to_goal=manhattanD(n,End_Node)
+					S_to_current=manhattanD(n,currentNode)
 					if(n.h == float('inf')):														#infinite h values use normal heuristic
 						n.h =manhattanD(n,End_Node)
 					else:
@@ -404,12 +405,18 @@ def main(window, size):
 		if start:
 			Start_Node, End_Node = Assign_Start_End(G,AG,rows,size)
 			for n in AG[Start_Node.cell_row()][Start_Node.cell_column()].neighbours:
-				if G[n.cell_row()][n.cell_col()].value == 0:
+				if G[n.cell_row()][n.cell_column()].value == 0:
 					n.value = 0
 					n.color = (0, 0, 0)
 			draw_grid(window,AG,rows,size)
 			start = False
-			path = Repeated_A_Star(G,AG,size,Start_Node,End_Node,True) 			#using True and False for repeated or Adapative A* runs
+			start=time.time()
+			path = Repeated_A_Star(G,AG,size,Start_Node,End_Node) 			#using True and False for repeated or Adapative A* runs
+			end=time.time()
+			print('Time for forward A*: ',end-start)
+			path2=Repeated_A_Star(G,AG,size,End_Node,Start_Node)
+			print('Backward A*: ',time.time()-end)
+			play=False
 			# if len(path) != 0:
 			# 	for i in range (len(path)):
 			# 		current = path[i]
