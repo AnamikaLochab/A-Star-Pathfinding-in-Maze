@@ -1,3 +1,4 @@
+from itertools import count
 from turtle import clear
 import pygame
 import random
@@ -8,6 +9,7 @@ import sys
 
 size = 800
 window = pygame.display.set_mode((size,size))
+count_cells=0
 
 # Creating cell class with all properties and functions we might need for a particular cell
 class cell :
@@ -297,6 +299,8 @@ def A_Star(Grid,size,Start_Node,End_Node,adaptive=False):
 
 	while OpenSet.size>0:
 		currentNode = OpenSet.remove()
+		global count_cells
+		count_cells = count_cells+1
 		ClosedSet.append((currentNode.cell_row(), currentNode.cell_column()))
 		for n in currentNode.neighbours:
 			if n.cell_row() == End_Node.cell_row() and n.cell_column() == End_Node.cell_column():
@@ -307,7 +311,7 @@ def A_Star(Grid,size,Start_Node,End_Node,adaptive=False):
 			if (n.cell_row(), n.cell_column()) not in ClosedSet and n.value !=0:
 				if(adaptive):																		#for adaptive runs			
 					S_to_goal=manhattanD(n,End_Node)
-					S_to_current=manhattanD(n,currentNode)
+					S_to_current=manhattanD(n,Start_Node)
 					if(n.h == float('inf')):														#infinite h values use normal heuristic
 						n.h =manhattanD(n,End_Node)
 					else:
@@ -413,10 +417,11 @@ def main(window, size):
 			start=time.time()
 			path = Repeated_A_Star(G,AG,size,Start_Node,End_Node) 			#using True and False for repeated or Adapative A* runs
 			end=time.time()
-			print('Time for forward A*: ',end-start)
-			path2=Repeated_A_Star(G,AG,size,End_Node,Start_Node)
-			print('Backward A*: ',time.time()-end)
-			play=False
+			print('Forward A*: ',count_cells)
+			count_repeated=count_cells
+			path2=Repeated_A_Star(G,AG,size,Start_Node,End_Node,True)
+			print('Adaptive A*: ',count_cells-count_repeated)
+			start=False
 			# if len(path) != 0:
 			# 	for i in range (len(path)):
 			# 		current = path[i]
