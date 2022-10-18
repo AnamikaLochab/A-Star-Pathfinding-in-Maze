@@ -1,8 +1,5 @@
-from itertools import count
-from turtle import clear
 import pygame
 import random
-import Algorithm1
 import time
 
 import sys
@@ -58,21 +55,6 @@ class cell :
 			self.neighbours.append(Grid[self.row][self.column - 1])
 		if self.column< size//self.width -1:
 			self.neighbours.append(Grid[self.row][self.column + 1])
-	def update_agentmap(self,Grid): # I was planning to call this every time the agent moves so we can highlight all the blocks it's aware of so that we don't have to show 2 windows of the world and world according to agent
-		#ignore for now
-		if self.row > 0 :
-			pygame.draw.line(window, (57, 255, 20), (self.x_cord , self.y_cord ), (self.x_cord , self.y_cord -self.width),5)
-			pygame.draw.line(window, (57, 255, 20), (self.x_cord + self.width, self.y_cord), (self.x_cord + self.width, self.y_cord - self.width),5)
-			pygame.draw.line(window, (57, 255, 20), (self.x_cord , self.y_cord-self.width), (self.x_cord + self.width, self.y_cord - self.width),5)
-		if self.row < size//self.width -1:
-			pygame.draw.line(window, (57, 255, 20), (self.x_cord , self.y_cord + self.width), (self.x_cord, self.y_cord + 2*self.width), 5)
-			pygame.draw.line(window, (57, 255, 20), (self.x_cord + self.width, self.y_cord+ self.width),  (self.x_cord + self.width, self.y_cord + 2*self.width), 5)
-			pygame.draw.line(window, (57, 255, 20), (self.x_cord, self.y_cord + 2*self.width), (self.x_cord + self.width, self.y_cord + 2*self.width), 5)
-
-		if self.column > 0 :
-			pass#pygame.draw.line(window, (57, 255, 20), (self.row, self.column), (self.row, self.column - 1))
-		if self.row < size//self.width -1:
-			pass#pygame.draw.line(window, (57, 255, 20), (self.row, self.column), (self.row, self.column+1))
 
 class MinHeap:
 
@@ -143,7 +125,15 @@ class MinHeap:
 
 		current = self.size
 
-		while self.Heap[current].cell_f() < self.Heap[self.parent(current)].cell_f():
+		while self.Heap[current].cell_f() <= self.Heap[self.parent(current)].cell_f():
+			# For tie-breaking
+			# if self.Heap[current].cell_f() == self.Heap[self.parent(current)].cell_f():
+			# 	if self.Heap[current].cell_g() > self.Heap[self.parent(current)].cell_g():
+			# 		self.swap(current, self.parent(current))
+			# 		current = self.parent(current)
+			# 	else:
+			# 		break
+			
 			self.swap(current, self.parent(current))
 			current = self.parent(current)
 
@@ -243,7 +233,7 @@ def Assign_Start_End(Grid, AgentGrid, rows,size):
 	if Grid[i][j].value == 0:
 		Grid[i][j].value == 1
 	Start_Node = AgentGrid[i][j]
-	AgentGrid[i][j].color = (255, 250, 0)
+	AgentGrid[i][j].color = (255, 250, 0) # Start node color yellow
 
 	i = rows - 1
 	j = rows - 2
@@ -253,15 +243,6 @@ def Assign_Start_End(Grid, AgentGrid, rows,size):
 	End_Node = AgentGrid[i][j]
 	AgentGrid[i][j].color = (255, 0, 0) # End node color red
 
-	# i = random.randint(0, rows - 1)
-	# j = random.randint(0, rows - 1)
-	# Start_Node = Grid[i][j]
-	# Grid[i][j].color = (255, 250, 0)
-	# # haven't put the loop to check if end nodes randomly gets same i,j as start, but will add that later
-	# i = random.randint(0, rows - 1)
-	# j = random.randint(0, rows - 1)
-	# End_Node = Grid[i][j]
-	# Grid[i][j].color = (255, 0, 0) # End node color red
 	return Start_Node, End_Node
 
 def manhattanD(cell1,cell2):
@@ -377,22 +358,22 @@ def Repeated_A_Star(Grid, AgentGrid, size, StartNode,End_Node,adaptive=False):
 				AgentGrid[row][col].draw_cell()
 				Grid[row][col].color=(0,255,0)
 
-
-		if endOfPath != -1:
-			S = AgentGrid[path[endOfPath - 1][0]][path[endOfPath - 1][1]]
+		S = AgentGrid[path[endOfPath - 1][0]][path[endOfPath - 1][1]]
+		if not (path[endOfPath] == (End_Node.cell_row(),End_Node.cell_column())):
 			Grid[path[endOfPath - 1][0]][path[endOfPath - 1][1]].color=(0,0,255)
-			S.color = (0, 0, 255)
-			S.draw_cell()
-			clear_values(AgentGrid,adaptive)												#remembering the h values for nodes that have been travesered in adaptive A* calls
-		# else:
-		# 	S = End_Node
+		S.color = (0, 0, 255)
+		S.draw_cell()
+		clear_values(AgentGrid,adaptive)												#remembering the h values for nodes that have been travesered in adaptive A* calls
+		
+
 
 		Grid[End_Node.cell_row()][End_Node.cell_column()].color=(255,0,0)
 		draw_grid(window,Grid,100,size)
 	Grid[End_Node.cell_row()][End_Node.cell_column()].color=(255,0,0)
 	print("I reached the target")
 		
-			
+def Repeated_Backward_A_Star(Grid, AgentGrid, size, StartNode,End_Node,adaptive=False):
+	Repeated_A_Star(Grid, AgentGrid, size, End_Node, StartNode, adaptive)
 
 def main(window, size):
 	rows = 100
@@ -414,22 +395,18 @@ def main(window, size):
 					n.color = (0, 0, 0)
 			draw_grid(window,AG,rows,size)
 			start = False
-			start=time.time()
+			startTime=time.time()
 			path = Repeated_A_Star(G,AG,size,Start_Node,End_Node) 			#using True and False for repeated or Adapative A* runs
-			end=time.time()
+			endTime=time.time()
 			print('Forward A*: ',count_cells)
+			print('Time Taken: ', endTime-startTime)
 			count_repeated=count_cells
+			startTime=time.time()
 			path2=Repeated_A_Star(G,AG,size,Start_Node,End_Node,True)
+			endTime=time.time()
 			print('Adaptive A*: ',count_cells-count_repeated)
+			print('Time Taken: ', endTime-startTime)
 			start=False
-			# if len(path) != 0:
-			# 	for i in range (len(path)):
-			# 		current = path[i]
-			# 		row = current[0]
-			# 		col = current[1]
-			# 		if G[row][col] != End_Node:
-			# 			G[row][col].color = (0,255,0)
-			# 			G[row][col].draw_cell()
 			pygame.display.update()
 
 
