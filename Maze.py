@@ -101,20 +101,51 @@ class MinHeap:
 		# If the node is a non-leaf node and greater
 		# than any of its child
 		if not self.isLeaf(pos):
-			if (self.Heap[pos].cell_f() > self.Heap[self.leftChild(pos)].cell_f() or
-			self.Heap[pos].cell_f() > self.Heap[self.rightChild(pos)].cell_f()):
+			if (self.Heap[pos].cell_f() >= self.Heap[self.leftChild(pos)].cell_f() or
+			self.Heap[pos].cell_f() >= self.Heap[self.rightChild(pos)].cell_f()):
 
 				# Swap with the left child and heapify
 				# the left child
 				if self.Heap[self.leftChild(pos)].cell_f() < self.Heap[self.rightChild(pos)].cell_f():
-					self.swap(pos, self.leftChild(pos))
-					self.minHeapify(self.leftChild(pos))
+					if self.Heap[self.leftChild(pos)].cell_f() == self.Heap[pos].cell_f():
+						if self.Heap[pos].cell_g() < self.Heap[self.leftChild(pos)].cell_g():
+							self.swap(pos, self.leftChild(pos))
+							self.minHeapify(self.leftChild(pos))
+					else:
+						self.swap(pos, self.leftChild(pos))
+						self.minHeapify(self.leftChild(pos))
+
+				if self.Heap[self.leftChild(pos)].cell_f() == self.Heap[self.rightChild(pos)].cell_f():
+					if self.Heap[self.leftChild(pos)].cell_g() > self.Heap[self.rightChild(pos)].cell_g():
+						if self.Heap[pos].cell_f() == self.Heap[self.leftChild(pos)].cell_f():
+							if self.Heap[pos].cell_g() < self.Heap[self.leftChild(pos)].cell_g():
+								self.swap(pos, self.leftChild(pos))
+								self.minHeapify(self.leftChild(pos))
+						else:
+							self.swap(pos, self.leftChild(pos))
+							self.minHeapify(self.leftChild(pos))
+					else:
+						if self.Heap[pos].cell_f() == self.Heap[self.rightChild(pos)].cell_f():
+							if self.Heap[pos].cell_g() < self.Heap[self.rightChild(pos)].cell_g():
+								self.swap(pos, self.rightChild(pos))
+								self.minHeapify(self.rightChild(pos))
+						else:
+							self.swap(pos, self.rightChild(pos))
+							self.minHeapify(self.rightChild(pos))
+
+						
 
 				# Swap with the right child and heapify
 				# the right child
 				else:
-					self.swap(pos, self.rightChild(pos))
-					self.minHeapify(self.rightChild(pos))
+					if self.Heap[self.leftChild(pos)].cell_f() == self.Heap[pos].cell_f():
+						if self.Heap[pos].cell_g() < self.Heap[self.rightChild(pos)].cell_g():
+							self.swap(pos, self.rightChild(pos))
+							self.minHeapify(self.rightChild(pos))
+					else:
+						self.swap(pos, self.rightChild(pos))
+						self.minHeapify(self.rightChild(pos))
+					
 
 	# Function to insert a node into the heap
 	def insert(self, element):
